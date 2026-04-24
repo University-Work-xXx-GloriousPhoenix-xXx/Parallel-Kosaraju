@@ -56,9 +56,29 @@ namespace ParallelKosaraju.UI
 
         private DirectedGraph?    _graph;
 
+        private SplitContainer? _splitGraph;
+        private SplitContainer? _splitStep;
+
         public MainForm()
         {
             InitializeComponent();
+            this.Load += MainForm_Load;
+        }
+
+        private void MainForm_Load(object? sender, EventArgs e)
+        {
+            if (_splitGraph != null)
+            {
+                _splitGraph.SplitterDistance = 820;
+                _splitGraph.Panel1MinSize = 400;
+                _splitGraph.Panel2MinSize = 280;
+            }
+            if (_splitStep != null)
+            {
+                _splitStep.SplitterDistance = 760;
+                _splitStep.Panel1MinSize = 400;
+                _splitStep.Panel2MinSize = 260;
+            }
         }
 
         // ── UI Construction ─────────────────────────────────────────────────
@@ -122,16 +142,13 @@ namespace ParallelKosaraju.UI
         // ── Graph Tab ───────────────────────────────────────────────────────
         private void BuildGraphTab()
         {
-            var split = new SplitContainer
+            var _splitGraph = new SplitContainer
             {
                 Dock        = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
-                SplitterDistance = 820,
-                Panel1MinSize    = 400,
-                Panel2MinSize    = 280,
                 BackColor   = Color.FromArgb(22, 22, 35),
             };
-            _tabGraph.Controls.Add(split);
+            _tabGraph.Controls.Add(_splitGraph);
 
             // Left: canvas
             _canvas = new GraphCanvas { Dock = DockStyle.Fill };
@@ -144,7 +161,7 @@ namespace ParallelKosaraju.UI
             };
             var canvasHost = new Panel { Dock = DockStyle.Fill, BackColor = Color.FromArgb(18, 18, 28) };
             canvasHost.Controls.Add(_canvas);
-            split.Panel1.Controls.Add(canvasHost);
+            _splitGraph.Panel1.Controls.Add(canvasHost);
 
             // Right: controls panel
             var right = new FlowLayoutPanel
@@ -155,7 +172,7 @@ namespace ParallelKosaraju.UI
                 AutoScroll= true,
                 BackColor = Color.FromArgb(26, 26, 40),
             };
-            split.Panel2.Controls.Add(right);
+            _splitGraph.Panel2.Controls.Add(right);
 
             right.Controls.Add(MakeLabel("Graph Generation", bold: true, large: true));
             right.Controls.Add(MakeLabel("Model:"));
@@ -208,19 +225,16 @@ namespace ParallelKosaraju.UI
         // ── Step Tab ─────────────────────────────────────────────────────────
         private void BuildStepTab()
         {
-            var split = new SplitContainer
+            var _splitGraph = new SplitContainer
             {
                 Dock        = DockStyle.Fill,
                 Orientation = Orientation.Vertical,
-                SplitterDistance = 760,
-                Panel1MinSize    = 400,
-                Panel2MinSize    = 260,
                 BackColor   = Color.FromArgb(22, 22, 35),
             };
-            _tabStep.Controls.Add(split);
+            _tabStep.Controls.Add(_splitGraph);
 
             _stepCanvas = new GraphCanvas { Dock = DockStyle.Fill };
-            split.Panel1.Controls.Add(_stepCanvas);
+            _splitGraph.Panel1.Controls.Add(_stepCanvas);
 
             var right = new FlowLayoutPanel
             {
@@ -230,7 +244,7 @@ namespace ParallelKosaraju.UI
                 AutoScroll= true,
                 BackColor = Color.FromArgb(26, 26, 40),
             };
-            split.Panel2.Controls.Add(right);
+            _splitGraph.Panel2.Controls.Add(right);
 
             right.Controls.Add(MakeLabel("Step-by-Step Demo", bold: true, large: true));
             right.Controls.Add(MakeLabel("Vertices (n ≤ 30 recommended):"));
@@ -645,19 +659,22 @@ namespace ParallelKosaraju.UI
         }
 
         private static NumericUpDown MakeNud(decimal val, decimal min, decimal max,
-                                              decimal inc, int decimals = 0) =>
-            new NumericUpDown
+                                      decimal inc, int decimals = 0)
+        {
+            var nud = new NumericUpDown
             {
-                Value         = val,
-                Minimum       = min,
-                Maximum       = max,
-                Increment     = inc,
+                Minimum = min,
+                Maximum = max,
+                Increment = inc,
                 DecimalPlaces = decimals,
-                Width         = 140,
-                BackColor     = Color.FromArgb(32, 32, 52),
-                ForeColor     = Color.FromArgb(200, 210, 230),
-                Margin        = new Padding(0, 2, 0, 4),
+                Width = 140,
+                BackColor = Color.FromArgb(32, 32, 52),
+                ForeColor = Color.FromArgb(200, 210, 230),
+                Margin = new Padding(0, 2, 0, 4),
             };
+            nud.Value = val;
+            return nud;
+        }
 
         private static Button MakeButton(string text, Color accent, int width = 200) =>
             new Button
