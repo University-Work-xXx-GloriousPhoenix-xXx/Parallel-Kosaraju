@@ -1,0 +1,3 @@
+﻿using ParallelKosaraju;
+
+GraphHelper.Benchmark();
