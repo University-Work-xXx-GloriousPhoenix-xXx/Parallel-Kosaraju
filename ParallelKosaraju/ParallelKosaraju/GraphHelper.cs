@@ -12,11 +12,11 @@ public static class GraphHelper
     private static readonly int START_POW = 3;
     private static readonly int POW_COUNT = 4;
 
-    static DirectedGraph GenerateRandomGraph(int vertices, int degree, int seed = 42)
+    static DirectedGraph<int> GenerateRandomGraph(int vertices, int degree, int seed = 42)
     {
         var rand = new Random(seed);
-        var g = new DirectedGraph(vertices);
-        int edges = vertices * degree;
+        var g = new DirectedGraph<int>(vertices);
+        var edges = vertices * degree;
         for (int i = 0; i < edges; i++)
         {
             int from = rand.Next(vertices);

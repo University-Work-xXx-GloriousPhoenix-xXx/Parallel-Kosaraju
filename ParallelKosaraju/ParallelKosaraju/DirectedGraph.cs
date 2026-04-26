@@ -1,21 +1,28 @@
 ﻿namespace ParallelKosaraju;
 
-public class DirectedGraph
+public class DirectedGraph<T>
 {
     public int VertexCount { get; }
-    public List<int>[] OutEdges { get; } // Outcoming edges
-    public List<int>[] InEdges { get; } // Incoming (reversed graph)
+    public List<int>[] OutEdges { get; }
+    public List<int>[] InEdges { get; }
+    public T[] Vertices { get; }
 
     public DirectedGraph(int n)
     {
         VertexCount = n;
         OutEdges = new List<int>[n];
         InEdges = new List<int>[n];
-        for (int i = 0; i < n; i++)
+        Vertices = new T[n];
+        for (var i = 0; i < n; i++)
         {
             OutEdges[i] = [];
             InEdges[i] = [];
         }
+    }
+
+    public DirectedGraph(T[] vertices) : this(vertices.Length)
+    {
+        vertices.CopyTo(Vertices, 0);
     }
 
     public void AddEdge(int from, int to)
@@ -24,3 +31,4 @@ public class DirectedGraph
         InEdges[to].Add(from);
     }
 }
+
