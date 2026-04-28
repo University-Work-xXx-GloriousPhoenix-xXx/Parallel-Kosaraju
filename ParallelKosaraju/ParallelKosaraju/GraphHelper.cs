@@ -1,4 +1,5 @@
-﻿using System.Diagnostics;
+﻿using ParallelKosaraju.Algorithm;
+using System.Diagnostics;
 
 namespace ParallelKosaraju;
 
@@ -8,9 +9,9 @@ public static class GraphHelper
     private static readonly string OutputPath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\result\\output.txt";
     private static readonly int MEASURE_RUNS = 15;
     private static readonly int WARMUP_RUNS = 5;
-    private static readonly int DEGREE = 5;
-    private static readonly int START_POW = 3;
-    private static readonly int POW_COUNT = 4;
+    private static readonly int START_POW = 4;
+    private static readonly int END_POW = 7;
+    private static readonly int POW_COUNT = END_POW - START_POW + 1;
 
     static DirectedGraph<int> GenerateRandomGraph(int vertices, int degree, int seed = 42)
     {
@@ -26,7 +27,7 @@ public static class GraphHelper
         }
         return g;
     }
-    public static void Benchmark()
+    public static void Benchmark(int degree)
     {
         var sizes = new List<int>();
 
@@ -42,36 +43,46 @@ public static class GraphHelper
         File.WriteAllText(OutputPath, string.Empty);
         File.WriteAllText(ResultPath, string.Empty);
 
-        var header = "| Vertices |   Edges   | Sequential (ms) | Parallel (ms) | Acceleration |";
-        var separator = "|----------|-----------|-----------------|---------------|--------------|";
+        var degreeLength = degree.ToString().Length;
+        var degreeLine = $"| {degree}x |";
+        var degreeTopper = $"|{new string('-', degreeLength + 3)}|";
+        var header = "| Vertices |    Edges    | Sequential (ms) | Parallel (ms) | Acceleration | Sequential (q) | Parallel (q) |";
+        var separator = "|----------|-------------|-----------------|---------------|--------------|----------------|--------------|";
 
-        Console.WriteLine($"{separator}\n{header}\n{separator}");
-        File.AppendAllLines(OutputPath, [ separator, header, separator ]);
+        Console.WriteLine($"{degreeTopper}\n{degreeLine}\n{separator}\n{header}\n{separator}");
+        File.AppendAllLines(OutputPath, [ degreeTopper, degreeLine, separator, header, separator ]);
         File.AppendAllLines(ResultPath, [ "v;e;seq;par;acc" ]);
+
+        var finder = new SCCFinder<int>();
 
         foreach (var n in sizes)
         {
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
-                var warmup_graph = GenerateRandomGraph(n, DEGREE);
-                SCCFinder.KosarajuSequential(warmup_graph);
-                SCCFinder.KosarajuParallel(warmup_graph);
+                var warmup_graph = GenerateRandomGraph(n, degree);
+                finder.KosarajuSequential(warmup_graph);
+                finder.KosarajuParallel(warmup_graph);
             }
 
-            var graph = GenerateRandomGraph(n, DEGREE);
+            var graph = GenerateRandomGraph(n, degree);
             var seqTotal = 0L;
             var parTotal = 0L;
+
+            var seqQ = 0;
+            var parQ = 0;
 
             for (var r = 0; r < MEASURE_RUNS; r++)
             {
                 var seqStart = NanoTime();
-                SCCFinder.KosarajuSequential(graph);
+                var seqRes = finder.KosarajuSequential(graph);
                 var seqEnd = NanoTime();
+                seqQ = seqRes.Count;
                 seqTotal += (seqEnd - seqStart);
 
                 var parStart = NanoTime();
-                SCCFinder.KosarajuParallel(graph);
+                var parRes = finder.KosarajuParallel(graph);
                 var parEnd = NanoTime();
+                parQ = parRes.Count;
                 parTotal += (parEnd - parStart);
             }
 
@@ -79,8 +90,8 @@ public static class GraphHelper
             var parAvg = parTotal / (double)MEASURE_RUNS / 1_000_000.0;
             var speedup = seqAvg / parAvg;
 
-            var outputLine = $"| {n,8} | {n * DEGREE,9} | {seqAvg,15:F2} | {parAvg,13:F2} | {speedup,11:F2}x |";
-            var resultLine = $"{n};{n * DEGREE};{seqAvg:F2};{parAvg:F2};{speedup:F2}";
+            var outputLine = $"| {n,8} | {n * degree,11} | {seqAvg,15:F2} | {parAvg,13:F2} | {speedup,11:F2}x | {seqQ,14} | {parQ,12} |";
+            var resultLine = $"{n};{n * degree};{seqAvg:F2};{parAvg:F2};{speedup:F2}";
 
 
             Console.WriteLine(outputLine);
@@ -91,7 +102,6 @@ public static class GraphHelper
         Console.WriteLine(separator);
         File.AppendAllLines(OutputPath, [separator]);
     }
-
     private static long NanoTime()
     {
         long nano = 10000L * Stopwatch.GetTimestamp();
