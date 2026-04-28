@@ -2,7 +2,7 @@
 
 public interface ISCCFinder<T>
 {
-    List<List<int>> KosarajuSequential(DirectedGraph<T> graph);
+    List<List<int>> BasicKosarajuSequential(DirectedGraph<T> graph);
     List<List<int>> ModifiedKosarajuSequential(DirectedGraph<T> graph);
-    List<List<int>> KosarajuParallel(DirectedGraph<T> graph, bool isMultithreaded = true);
+    List<List<int>> ModifiedKosarajuParallel(DirectedGraph<T> graph, bool isMultithreaded = true);
 }

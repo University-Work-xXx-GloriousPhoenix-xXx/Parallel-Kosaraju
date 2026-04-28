@@ -2,10 +2,10 @@
 
 public class SCCFinder<T> : ISCCFinder<T>
 {
-    public List<List<int>> KosarajuSequential(DirectedGraph<T> graph)
+    public List<List<int>> BasicKosarajuSequential(DirectedGraph<T> graph)
     {
         var n = graph.VertexCount;
-        
+
         var state = new byte[n];
         var stack = new Stack<int>();
         var order = new List<int>();
@@ -79,13 +79,10 @@ public class SCCFinder<T> : ISCCFinder<T>
 
         return components;
     }
-    public List<List<int>> KosarajuParallel(DirectedGraph<T> graph, bool isMultithreaded = true)
+    public List<List<int>> ModifiedKosarajuSequential(DirectedGraph<T> graph)
+        => ModifiedKosarajuParallel(graph, isMultithreaded: false);
+    public List<List<int>> ModifiedKosarajuParallel(DirectedGraph<T> graph, bool isMultithreaded = true)
     {
         throw new NotImplementedException();
-    }
-
-    public List<List<int>> ModifiedKosarajuSequential(DirectedGraph<T> graph)
-    {
-        return KosarajuParallel(graph, false);
     }
 }
