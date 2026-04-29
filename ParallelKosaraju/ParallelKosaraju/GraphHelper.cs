@@ -7,18 +7,17 @@ public static class GraphHelper
 {
     private static readonly string ResultPath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\result\\result.csv";
     private static readonly string OutputPath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\result\\output.txt";
-    private static readonly int MEASURE_RUNS = 15;
-    private static readonly int WARMUP_RUNS = 5;
+    private static readonly int MEASURE_RUNS = 5;
+    private static readonly int WARMUP_RUNS = 2;
     private static readonly int START_POW = 4;
     private static readonly int END_POW = 7;
     private static readonly int POW_COUNT = END_POW - START_POW + 1;
 
-    static DirectedGraph<int> GenerateRandomGraph(int vertices, int degree, int seed = 42)
+    static DirectedGraph<int> GenerateRandomGraph(int vertices, int edgeCount, int seed = 42)
     {
         var rand = new Random(seed);
         var g = new DirectedGraph<int>(vertices);
-        var edges = vertices * degree;
-        for (int i = 0; i < edges; i++)
+        for (int i = 0; i < edgeCount; i++)
         {
             int from = rand.Next(vertices);
             int to = rand.Next(vertices);
@@ -27,7 +26,7 @@ public static class GraphHelper
         }
         return g;
     }
-    public static void Benchmark(int degree)
+    public static void Benchmark(double edgeRatio)
     {
         var sizes = new List<int>();
 
@@ -43,9 +42,6 @@ public static class GraphHelper
         File.WriteAllText(OutputPath, string.Empty);
         File.WriteAllText(ResultPath, string.Empty);
 
-        var degreeLength = degree.ToString().Length;
-        var degreeLine = $"| {degree}x |";
-        var degreeTopper = $"|{new string('-', degreeLength + 3)}|";
         var separator = "|----------|-------------|----------------|--------------|--------------|-------------|-------------|-------------|---------------|-------------|-------------|----------|";
         var cmdPattern = "| {0,8} | {1,11} | {2,14:F2} | {3,12:F2} | {4,12:F2} | {5,11:F2} | {6,11:F2} | {7,11:F2} | {8,13} | {9,11} | {10,11} | {11,8} |";
         var csvPattern = "{0};{1};{2:F2};{3:F2.3};{4:F2.3};{5:F2.2};{6:F2.2};{7:F2.2};{8};{9};{10};{11}";
@@ -56,23 +52,24 @@ public static class GraphHelper
             "Basic Seq (q)", "Mod Seq (q)", "Mod Par (q)",
             "Is Equal");
 
-        Console.WriteLine($"{degreeTopper}\n{degreeLine}\n{separator}\n{header}\n{separator}");
-        File.AppendAllLines(OutputPath, [ degreeTopper, degreeLine, separator, header, separator ]);
+        Console.WriteLine($"{separator}\n{header}\n{separator}");
+        File.AppendAllLines(OutputPath, [ separator, header, separator ]);
         File.AppendAllLines(ResultPath, [ "v;e;t_bseq;t_mseq;t_mpar;acc_mseq_bseq;acc_mpar_bseq;acc_mpar_mseq;q_bseq;q_mseq;q_mpar;eq" ]);
 
         var finder = new SCCFinder<int>();
 
         foreach (var n in sizes)
         {
+            var edgeCount = (int)(n * edgeRatio);
+            var graph = GenerateRandomGraph(n, edgeCount);
+
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
-                var warmup_graph = GenerateRandomGraph(n, degree);
-                finder.BasicKosarajuSequential(warmup_graph);
-                finder.ModifiedKosarajuSequential(warmup_graph);
-                finder.ModifiedKosarajuParallel(warmup_graph);
+                finder.BasicKosarajuSequential(graph);
+                finder.ModifiedKosarajuSequential(graph);
+                finder.ModifiedKosarajuParallel(graph);
             }
 
-            var graph = GenerateRandomGraph(n, degree);
             long bSeqTotal = 0L, mSeqTotal = 0L, mParTotal = 0L;
             long bSeqQ = 0L, mSeqQ = 0L, mParQ = 0L;
             bool isEq = true;
@@ -112,8 +109,6 @@ public static class GraphHelper
             var mPar_bSeq_acc = bSeqAvg / mParAvg;
             var mPar_mSeq_acc = mSeqAvg / mParAvg;
 
-            var edgeCount = n * degree;
-            
             var cmdOutput = string.Format(cmdPattern,
                 n, edgeCount,
                 bSeqAvg, mSeqAvg, mParAvg,

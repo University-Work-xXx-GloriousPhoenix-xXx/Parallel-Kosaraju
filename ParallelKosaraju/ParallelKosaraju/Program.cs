@@ -1,11 +1,12 @@
 ﻿using ParallelKosaraju;
+using System.Globalization;
 
-var degree = 5;
+var edgeRatio = 5d;
 
-Console.WriteLine("Enter the degree of vertices:");
-if (int.TryParse(Console.ReadLine(), out var parsedDegree))
+Console.WriteLine("Enter the edge ratio to vertices:");
+if (double.TryParse(Console.ReadLine(), CultureInfo.InvariantCulture, out var parsedRatio))
 {
-    degree = parsedDegree;
+    edgeRatio = parsedRatio;
 }
 
-GraphHelper.Benchmark(degree);
+GraphHelper.Benchmark(edgeRatio);
