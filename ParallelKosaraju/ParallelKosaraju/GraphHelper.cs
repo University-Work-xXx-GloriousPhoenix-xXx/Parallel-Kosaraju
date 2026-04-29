@@ -41,21 +41,21 @@ public static class GraphHelper
             sizes.Add(5 * factor);
             factor *= 10;
         }
-        
-        File.WriteAllText(PurePath, string.Empty);
-        File.WriteAllText(DecoPath, string.Empty);
 
-        var separator = "|----------|-------------|--------------|--------------|-------------|-------------|";
-        var cmdPattern = "| {0,8} | {1,11} | {2,12:F2} | {3,12:F2} | {4,11:F2} | {5,11} |";
-        var csvPattern = "{0};{1};{2};{3};{4};{5};{6};{7}";
+        File.WriteAllText(DecoPath, string.Empty);
+        File.WriteAllText(PurePath, string.Empty);
+
+        var separator = "|----------|-------------|-----------------|---------------|-------------|----------|";
+        var cmdPattern = "| {0,8} | {1,11} | {2,15:F2} | {3,13:F2} | {4,11:F2} | {5,8} |";
+        var csvPattern = "{0};{1};{2};{3};{4};{5}";
         var header = string.Format(cmdPattern,
             "Vertices", "Edges   ",
-            "Mod Seq (ms)", "Mod Par (ms)",
-            "MP ~ MS Acc", "Mod Seq (q)");
+            "Sequential (ms)", "Parallel (ms)",
+            "Speedup (x)", "SCCs  ");
 
         Console.WriteLine($"{separator}\n{header}\n{separator}");
-        File.AppendAllLines(PurePath, [ separator, header, separator ]);
-        File.AppendAllLines(DecoPath, [ "v;e;t_seq;t_par;acc;q_par" ]);
+        File.AppendAllLines(DecoPath, [ separator, header, separator ]);
+        File.AppendAllLines(PurePath, [ "v;e;seq;par;acc;q" ]);
 
         var finder = new SCCFinder<int>();
 
@@ -71,7 +71,7 @@ public static class GraphHelper
             }
 
             long mSeqTotal = 0L, mParTotal = 0L;
-            long mSeqQ = 0L, mParQ = 0L;
+            long mSeqQ, mParQ = 0L;
             bool isEq = true;
 
             for (var r = 0; r < MEASURE_RUNS; r++)
@@ -102,22 +102,20 @@ public static class GraphHelper
                 n, edgeCount,
                 mSeqAvg, mParAvg,
                 mPar_mSeq_acc,
-                mSeqQ, mParQ,
-                isEq);
+                mParQ);
             var csvOutput = string.Format(csvPattern,
                 n, edgeCount,
                 mSeqAvg, mParAvg,
                 mPar_mSeq_acc,
-                mSeqQ, mParQ,
-                isEq);
+                mParQ);
 
             Console.WriteLine(cmdOutput);
-            File.AppendAllLines(PurePath, [cmdOutput]);
-            File.AppendAllLines(DecoPath, [csvOutput]);
+            File.AppendAllLines(DecoPath, [cmdOutput]);
+            File.AppendAllLines(PurePath, [csvOutput]);
         }
 
         Console.WriteLine(separator);
-        File.AppendAllLines(PurePath, [separator]);
+        File.AppendAllLines(DecoPath, [separator]);
     }
     private static long NanoTime()
     {
