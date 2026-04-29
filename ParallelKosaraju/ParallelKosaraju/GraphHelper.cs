@@ -5,8 +5,8 @@ namespace ParallelKosaraju;
 
 public static class GraphHelper
 {
-    private static readonly string ResultPath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\result\\result.csv";
-    private static readonly string OutputPath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\result\\output.txt";
+    private static readonly string DecoPath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\Result\\Deco.txt";
+    private static readonly string PurePath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\Result\\Pure.csv";
     private static readonly int MEASURE_RUNS = 5;
     private static readonly int WARMUP_RUNS = 2;
     private static readonly int START_POW = 4;
@@ -39,8 +39,8 @@ public static class GraphHelper
             factor *= 10;
         }
         
-        File.WriteAllText(OutputPath, string.Empty);
-        File.WriteAllText(ResultPath, string.Empty);
+        File.WriteAllText(PurePath, string.Empty);
+        File.WriteAllText(DecoPath, string.Empty);
 
         var separator = "|----------|-------------|----------------|--------------|--------------|-------------|-------------|-------------|---------------|-------------|-------------|----------|";
         var cmdPattern = "| {0,8} | {1,11} | {2,14:F2} | {3,12:F2} | {4,12:F2} | {5,11:F2} | {6,11:F2} | {7,11:F2} | {8,13} | {9,11} | {10,11} | {11,8} |";
@@ -53,8 +53,8 @@ public static class GraphHelper
             "Is Equal");
 
         Console.WriteLine($"{separator}\n{header}\n{separator}");
-        File.AppendAllLines(OutputPath, [ separator, header, separator ]);
-        File.AppendAllLines(ResultPath, [ "v;e;t_bseq;t_mseq;t_mpar;acc_mseq_bseq;acc_mpar_bseq;acc_mpar_mseq;q_bseq;q_mseq;q_mpar;eq" ]);
+        File.AppendAllLines(PurePath, [ separator, header, separator ]);
+        File.AppendAllLines(DecoPath, [ "v;e;t_bseq;t_mseq;t_mpar;acc_mseq_bseq;acc_mpar_bseq;acc_mpar_mseq;q_bseq;q_mseq;q_mpar;eq" ]);
 
         var finder = new SCCFinder<int>();
 
@@ -65,7 +65,6 @@ public static class GraphHelper
 
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
-                finder.BasicKosarajuSequential(graph);
                 finder.ModifiedKosarajuSequential(graph);
                 finder.ModifiedKosarajuParallel(graph);
             }
@@ -76,10 +75,6 @@ public static class GraphHelper
 
             for (var r = 0; r < MEASURE_RUNS; r++)
             {
-                var bSeqStart = NanoTime();
-                var bSeqRes = finder.BasicKosarajuSequential(graph);
-                var bSeqEnd = NanoTime();
-
                 var mSeqStart = NanoTime();
                 var mSeqRes = finder.ModifiedKosarajuSequential(graph);
                 var mSeqEnd = NanoTime();
@@ -123,12 +118,12 @@ public static class GraphHelper
                 isEq);
 
             Console.WriteLine(cmdOutput);
-            File.AppendAllLines(OutputPath, [cmdOutput]);
-            File.AppendAllLines(ResultPath, [csvOutput]);
+            File.AppendAllLines(PurePath, [cmdOutput]);
+            File.AppendAllLines(DecoPath, [csvOutput]);
         }
 
         Console.WriteLine(separator);
-        File.AppendAllLines(OutputPath, [separator]);
+        File.AppendAllLines(PurePath, [separator]);
     }
     private static long NanoTime()
     {
