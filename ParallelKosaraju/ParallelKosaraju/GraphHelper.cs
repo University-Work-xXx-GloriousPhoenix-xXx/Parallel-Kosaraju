@@ -66,8 +66,8 @@ public static class GraphHelper
 
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
-                finder.ModifiedKosarajuSequential(graph);
-                finder.ModifiedKosarajuParallel(graph);
+                finder.KosarajuSequential(graph);
+                finder.KosarajuParallel(graph);
             }
 
             long mSeqTotal = 0L, mParTotal = 0L;
@@ -77,15 +77,16 @@ public static class GraphHelper
             for (var r = 0; r < MEASURE_RUNS; r++)
             {
                 var mSeqStart = NanoTime();
-                var mSeqRes = finder.ModifiedKosarajuSequential(graph);
+                var mSeqRes = finder.KosarajuSequential(graph);
                 var mSeqEnd = NanoTime();
 
                 var mParStart = NanoTime();
-                var mParRes = finder.ModifiedKosarajuParallel(graph);
+                var mParRes = finder.KosarajuParallel(graph);
                 var mParEnd = NanoTime();
 
                 mSeqQ = mSeqRes.Count;
                 mParQ = mParRes.Count;
+                Console.WriteLine($"{mSeqQ} {mParQ}");
 
                 isEq &= (mSeqQ == mParQ);
 
