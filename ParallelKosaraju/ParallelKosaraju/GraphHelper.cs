@@ -64,10 +64,20 @@ public static class GraphHelper
             var edgeCount = (int)(n * edgeRatio);
             var graph = GenerateRandomGraph(n, edgeCount);
 
+            var totalSteps = WARMUP_RUNS * 2 + MEASURE_RUNS * 2;
+            var currentStep = 0;
+
+            DrawProgressBar(0, totalSteps);
+
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
                 finder.KosarajuSequential(graph);
+                currentStep++;
+                DrawProgressBar(currentStep, totalSteps);
+
                 finder.KosarajuParallel(graph);
+                currentStep++;
+                DrawProgressBar(currentStep, totalSteps);
             }
 
             long mSeqTotal = 0L, mParTotal = 0L;
@@ -80,19 +90,26 @@ public static class GraphHelper
                 var mSeqRes = finder.KosarajuSequential(graph);
                 var mSeqEnd = NanoTime();
 
+                currentStep++;
+                DrawProgressBar(currentStep, totalSteps);
+
                 var mParStart = NanoTime();
                 var mParRes = finder.KosarajuParallel(graph);
                 var mParEnd = NanoTime();
 
+                currentStep++;
+                DrawProgressBar(currentStep, totalSteps);
+
                 mSeqQ = mSeqRes.Count;
                 mParQ = mParRes.Count;
-                Console.WriteLine($"{mSeqQ} {mParQ}");
 
                 isEq &= (mSeqQ == mParQ);
 
                 mSeqTotal += (mSeqEnd - mSeqStart);
                 mParTotal += (mParEnd - mParStart);
             }
+
+            Console.Write("\r" + new string(' ', 50) + "\r");
 
             var mSeqAvg = mSeqTotal / (double)MEASURE_RUNS / 1_000_000.0;
             var mParAvg = mParTotal / (double)MEASURE_RUNS / 1_000_000.0;
@@ -124,5 +141,15 @@ public static class GraphHelper
         nano /= TimeSpan.TicksPerMillisecond;
         nano *= 100L;
         return nano;
+    }
+    private static void DrawProgressBar(int current, int total, int width = 20)
+    {
+        var progress = (double)current / total;
+        var filled = (int)(progress * width);
+
+        var bar = new string('■', filled) + new string('-', width - filled);
+        var percent = progress * 100;
+
+        Console.Write($"\r[{bar}] {percent,6:F1}%");
     }
 }
