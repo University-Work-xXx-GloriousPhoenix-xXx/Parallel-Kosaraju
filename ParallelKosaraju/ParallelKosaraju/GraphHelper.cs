@@ -43,18 +43,18 @@ public static class GraphHelper
         File.WriteAllText(DecoPath, string.Empty);
 
         var separator = "|----------|-------------|----------------|--------------|--------------|-------------|-------------|-------------|---------------|-------------|-------------|----------|";
-        var cmdPattern = "| {0,8} | {1,11} | {2,14:F2} | {3,12:F2} | {4,12:F2} | {5,11:F2} | {6,11:F2} | {7,11:F2} | {8,13} | {9,11} | {10,11} | {11,8} |";
-        var csvPattern = "{0};{1};{2:F2};{3:F2.3};{4:F2.3};{5:F2.2};{6:F2.2};{7:F2.2};{8};{9};{10};{11}";
+        var cmdPattern = "| {0,8} | {1,11} | {2,12:F2} | {3,12:F2} | {4,11:F2} | {5,11} | {6,11} | {7,8} |";
+        var csvPattern = "{0};{1};{3:F2.3};{4:F2.3};{7:F2.2};{9};{10};{11}";
         var header = string.Format(cmdPattern,
             "Vertices", "Edges",
-            "Basic Seq (ms)", "Mod Seq (ms)", "Mod Par (ms)",
-            "MS ~ BS Acc", "MP ~ BS Acc", "MP ~ MS Acc",
-            "Basic Seq (q)", "Mod Seq (q)", "Mod Par (q)",
+            "Mod Seq (ms)", "Mod Par (ms)",
+            "MP ~ MS Acc",
+            "Mod Seq (q)", "Mod Par (q)",
             "Is Equal");
 
         Console.WriteLine($"{separator}\n{header}\n{separator}");
         File.AppendAllLines(PurePath, [ separator, header, separator ]);
-        File.AppendAllLines(DecoPath, [ "v;e;t_bseq;t_mseq;t_mpar;acc_mseq_bseq;acc_mpar_bseq;acc_mpar_mseq;q_bseq;q_mseq;q_mpar;eq" ]);
+        File.AppendAllLines(DecoPath, [ "v;e;t_seq;t_par;acc;q_seq;q_par;eq" ]);
 
         var finder = new SCCFinder<int>();
 
@@ -69,8 +69,8 @@ public static class GraphHelper
                 finder.ModifiedKosarajuParallel(graph);
             }
 
-            long bSeqTotal = 0L, mSeqTotal = 0L, mParTotal = 0L;
-            long bSeqQ = 0L, mSeqQ = 0L, mParQ = 0L;
+            long mSeqTotal = 0L, mParTotal = 0L;
+            long mSeqQ = 0L, mParQ = 0L;
             bool isEq = true;
 
             for (var r = 0; r < MEASURE_RUNS; r++)
@@ -83,38 +83,31 @@ public static class GraphHelper
                 var mParRes = finder.ModifiedKosarajuParallel(graph);
                 var mParEnd = NanoTime();
 
-                bSeqQ = bSeqRes.Count;
                 mSeqQ = mSeqRes.Count;
                 mParQ = mParRes.Count;
 
-                isEq &= (bSeqQ == mSeqQ);
-                isEq &= (bSeqQ == mParQ);
                 isEq &= (mSeqQ == mParQ);
 
-                bSeqTotal += (bSeqEnd - bSeqStart);
                 mSeqTotal += (mSeqEnd - mSeqStart);
                 mParTotal += (mParEnd - mParStart);
             }
 
-            var bSeqAvg = bSeqTotal / (double)MEASURE_RUNS / 1_000_000.0;
             var mSeqAvg = mSeqTotal / (double)MEASURE_RUNS / 1_000_000.0;
             var mParAvg = mParTotal / (double)MEASURE_RUNS / 1_000_000.0;
 
-            var mSeq_bSeq_acc = bSeqAvg / mSeqAvg;
-            var mPar_bSeq_acc = bSeqAvg / mParAvg;
             var mPar_mSeq_acc = mSeqAvg / mParAvg;
 
             var cmdOutput = string.Format(cmdPattern,
                 n, edgeCount,
-                bSeqAvg, mSeqAvg, mParAvg,
-                mSeq_bSeq_acc, mPar_bSeq_acc, mPar_mSeq_acc,
-                bSeqQ, mSeqQ, mParQ,
+                mSeqAvg, mParAvg,
+                mPar_mSeq_acc,
+                mSeqQ, mParQ,
                 isEq);
             var csvOutput = string.Format(csvPattern,
                 n, edgeCount,
-                bSeqAvg, mSeqAvg, mParAvg,
-                mSeq_bSeq_acc, mPar_bSeq_acc, mPar_mSeq_acc,
-                bSeqQ, mSeqQ, mParQ,
+                mSeqAvg, mParAvg,
+                mPar_mSeq_acc,
+                mSeqQ, mParQ,
                 isEq);
 
             Console.WriteLine(cmdOutput);
