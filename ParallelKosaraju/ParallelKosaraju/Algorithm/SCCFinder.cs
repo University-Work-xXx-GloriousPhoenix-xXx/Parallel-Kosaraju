@@ -1,6 +1,6 @@
 ﻿namespace ParallelKosaraju.Algorithm;
 
-public class SCCFinder<T> : ISCCFinder<T>
+public partial class SCCFinder<T> : ISCCFinder<T>
 {
     public List<List<int>> BasicKosarajuSequential(DirectedGraph<T> graph)
     {
@@ -81,8 +81,4 @@ public class SCCFinder<T> : ISCCFinder<T>
     }
     public List<List<int>> ModifiedKosarajuSequential(DirectedGraph<T> graph)
         => ModifiedKosarajuParallel(graph, isMultithreaded: false);
-    public List<List<int>> ModifiedKosarajuParallel(DirectedGraph<T> graph, bool isMultithreaded = true)
-    {
-        throw new NotImplementedException();
-    }
 }
