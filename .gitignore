@@ -401,5 +401,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 # Results
-**/Result/*.csv
-**/Result/*.txt
+Result/

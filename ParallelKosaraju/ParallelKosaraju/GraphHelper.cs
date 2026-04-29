@@ -5,10 +5,13 @@ namespace ParallelKosaraju;
 
 public static class GraphHelper
 {
-    private static readonly string DecoPath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\Result\\Deco.txt";
-    private static readonly string PurePath = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\Result\\Pure.csv";
+    private static readonly string ResultDir = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\Result\\";
+    private static readonly string DecoPath = Path.Combine(ResultDir, "Deco.txt");
+    private static readonly string PurePath = Path.Combine(ResultDir, "Pure.csv");
+
     private static readonly int MEASURE_RUNS = 5;
     private static readonly int WARMUP_RUNS = 2;
+
     private static readonly int START_POW = 4;
     private static readonly int END_POW = 7;
     private static readonly int POW_COUNT = END_POW - START_POW + 1;
@@ -42,19 +45,17 @@ public static class GraphHelper
         File.WriteAllText(PurePath, string.Empty);
         File.WriteAllText(DecoPath, string.Empty);
 
-        var separator = "|----------|-------------|----------------|--------------|--------------|-------------|-------------|-------------|---------------|-------------|-------------|----------|";
-        var cmdPattern = "| {0,8} | {1,11} | {2,12:F2} | {3,12:F2} | {4,11:F2} | {5,11} | {6,11} | {7,8} |";
-        var csvPattern = "{0};{1};{3:F2.3};{4:F2.3};{7:F2.2};{9};{10};{11}";
+        var separator = "|----------|-------------|--------------|--------------|-------------|-------------|";
+        var cmdPattern = "| {0,8} | {1,11} | {2,12:F2} | {3,12:F2} | {4,11:F2} | {5,11} |";
+        var csvPattern = "{0};{1};{2};{3};{4};{5};{6};{7}";
         var header = string.Format(cmdPattern,
-            "Vertices", "Edges",
+            "Vertices", "Edges   ",
             "Mod Seq (ms)", "Mod Par (ms)",
-            "MP ~ MS Acc",
-            "Mod Seq (q)", "Mod Par (q)",
-            "Is Equal");
+            "MP ~ MS Acc", "Mod Seq (q)");
 
         Console.WriteLine($"{separator}\n{header}\n{separator}");
         File.AppendAllLines(PurePath, [ separator, header, separator ]);
-        File.AppendAllLines(DecoPath, [ "v;e;t_seq;t_par;acc;q_seq;q_par;eq" ]);
+        File.AppendAllLines(DecoPath, [ "v;e;t_seq;t_par;acc;q_par" ]);
 
         var finder = new SCCFinder<int>();
 
