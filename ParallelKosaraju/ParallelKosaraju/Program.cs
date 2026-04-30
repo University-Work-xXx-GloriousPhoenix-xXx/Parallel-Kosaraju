@@ -1,7 +1,7 @@
 ﻿using ParallelKosaraju;
 using System.Globalization;
 
-var GLOBAL_RUNS = 3;
+var GLOBAL_RUNS = 10;
 var edgeRatio = 5d;
 
 
