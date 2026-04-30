@@ -6,11 +6,9 @@ namespace ParallelKosaraju;
 public static class GraphHelper
 {
     private static readonly string ResultDir = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\Result\\";
-    private static readonly string DecoPath = Path.Combine(ResultDir, "Deco.txt");
-    private static readonly string PurePath = Path.Combine(ResultDir, "Pure.csv");
-
-    private static readonly int MEASURE_RUNS = 5;
-    private static readonly int WARMUP_RUNS = 2;
+    
+    private static readonly int MEASURE_RUNS = 10;
+    private static readonly int WARMUP_RUNS = 3;
 
     private static readonly int START_POW = 4;
     private static readonly int END_POW = 7;
@@ -29,8 +27,11 @@ public static class GraphHelper
         }
         return g;
     }
-    public static void Benchmark(double edgeRatio)
+    public static void Benchmark(double edgeRatio, string suffix)
     {
+        var decoPath = Path.Combine(ResultDir, $"Deco_{suffix}.txt");
+        var purePath = Path.Combine(ResultDir, $"Pure_{suffix}.csv");
+
         var sizes = new List<int>();
 
         var factor = (int)Math.Pow(10, START_POW);
@@ -42,8 +43,8 @@ public static class GraphHelper
             factor *= 10;
         }
 
-        File.WriteAllText(DecoPath, string.Empty);
-        File.WriteAllText(PurePath, string.Empty);
+        File.WriteAllText(decoPath, string.Empty);
+        File.WriteAllText(purePath, string.Empty);
 
         var separator = "|----------|-------------|-----------------|---------------|-------------|----------|";
         var cmdPattern = "| {0,8} | {1,11} | {2,15:F2} | {3,13:F2} | {4,11:F2} | {5,8} |";
@@ -54,86 +55,94 @@ public static class GraphHelper
             "Speedup (x)", "SCCs  ");
 
         Console.WriteLine($"{separator}\n{header}\n{separator}");
-        File.AppendAllLines(DecoPath, [ separator, header, separator ]);
-        File.AppendAllLines(PurePath, [ "v;e;seq;par;acc;q" ]);
+        File.AppendAllLines(decoPath, [ separator, header, separator ]);
+        File.AppendAllLines(purePath, [ "v;e;seq;par;acc;q" ]);
 
         var finder = new SCCFinder<int>();
 
         foreach (var n in sizes)
         {
             var edgeCount = (int)(n * edgeRatio);
+            var genDone = 0;
+            var warmSeqDone = 0;
+            var warmParDone = 0;
+            var measSeqDone = 0;
+            var measParDone = 0;
+            DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
+
             var graph = GenerateRandomGraph(n, edgeCount);
-
-            var totalSteps = WARMUP_RUNS * 2 + MEASURE_RUNS * 2;
-            var currentStep = 0;
-
-            DrawProgressBar(0, totalSteps);
+            genDone = 1;
+            DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
 
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
                 finder.KosarajuSequential(graph);
-                currentStep++;
-                DrawProgressBar(currentStep, totalSteps);
-
-                finder.KosarajuParallel(graph);
-                currentStep++;
-                DrawProgressBar(currentStep, totalSteps);
+                warmSeqDone++;
+                DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
             }
 
-            long mSeqTotal = 0L, mParTotal = 0L;
-            long mSeqQ, mParQ = 0L;
-            bool isEq = true;
-
+            var seqQ = 0L;
+            var seqTotal = 0L;
             for (var r = 0; r < MEASURE_RUNS; r++)
             {
-                var mSeqStart = NanoTime();
-                var mSeqRes = finder.KosarajuSequential(graph);
-                var mSeqEnd = NanoTime();
+                var seqStart = NanoTime();
+                var seqRes = finder.KosarajuSequential(graph);
+                var seqEnd = NanoTime();
 
-                currentStep++;
-                DrawProgressBar(currentStep, totalSteps);
+                measSeqDone++;
+                DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
 
-                var mParStart = NanoTime();
-                var mParRes = finder.KosarajuParallel(graph);
-                var mParEnd = NanoTime();
+                seqQ = seqRes.Count;
+                seqTotal += (seqEnd - seqStart);
+            }
 
-                currentStep++;
-                DrawProgressBar(currentStep, totalSteps);
+            for (var wr = 0; wr < WARMUP_RUNS; wr++)
+            {
+                finder.KosarajuParallel(graph);
+                warmParDone++;
+                DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
+            }
 
-                mSeqQ = mSeqRes.Count;
-                mParQ = mParRes.Count;
+            var parQ = 0L;
+            var parTotal = 0L;
+            for (var r = 0; r < MEASURE_RUNS; r++)
+            {
+                var parStart = NanoTime();
+                var parRes = finder.KosarajuParallel(graph);
+                var parEnd = NanoTime();
 
-                isEq &= (mSeqQ == mParQ);
+                measParDone++;
+                DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
 
-                mSeqTotal += (mSeqEnd - mSeqStart);
-                mParTotal += (mParEnd - mParStart);
+                parQ = parRes.Count;
+                parTotal += (parEnd - parStart);
             }
 
             Console.Write("\r" + new string(' ', 50) + "\r");
 
-            var mSeqAvg = mSeqTotal / (double)MEASURE_RUNS / 1_000_000.0;
-            var mParAvg = mParTotal / (double)MEASURE_RUNS / 1_000_000.0;
+            var seqAvg = seqTotal / (double)MEASURE_RUNS / 1_000_000.0;
+            var parAvg = parTotal / (double)MEASURE_RUNS / 1_000_000.0;
 
-            var mPar_mSeq_acc = mSeqAvg / mParAvg;
+            var acc = seqAvg / parAvg;
 
             var cmdOutput = string.Format(cmdPattern,
                 n, edgeCount,
-                mSeqAvg, mParAvg,
-                mPar_mSeq_acc,
-                mParQ);
+                seqAvg, parAvg,
+                acc,
+                parQ);
             var csvOutput = string.Format(csvPattern,
                 n, edgeCount,
-                mSeqAvg, mParAvg,
-                mPar_mSeq_acc,
-                mParQ);
+                seqAvg, parAvg,
+                acc,
+                parQ);
 
             Console.WriteLine(cmdOutput);
-            File.AppendAllLines(DecoPath, [cmdOutput]);
-            File.AppendAllLines(PurePath, [csvOutput]);
+            File.AppendAllLines(decoPath, [cmdOutput]);
+            File.AppendAllLines(purePath, [csvOutput]);
         }
 
         Console.WriteLine(separator);
-        File.AppendAllLines(DecoPath, [separator]);
+        File.AppendAllLines(decoPath, [separator]);
     }
     private static long NanoTime()
     {
@@ -142,13 +151,32 @@ public static class GraphHelper
         nano *= 100L;
         return nano;
     }
-    private static void DrawProgressBar(int current, int total, int width = 20)
+    private static void DrawProgress(
+        int genDone,
+        int warmSeqDone, int warmSeqTotal,
+        int warmParDone, int warmParTotal,
+        int measSeqDone, int measSeqTotal,
+        int measParDone, int measParTotal)
     {
-        var progress = (double)current / total;
-        var filled = (int)(progress * width);
+        static string Segment(int done, int total)
+        {
+            return new string('■', done) + new string('-', total - done);
+        }
 
-        var bar = new string('■', filled) + new string('-', width - filled);
-        var percent = progress * 100;
+        var bar =
+            Segment(genDone, 1) + "|" +
+            Segment(warmSeqDone, warmSeqTotal) + "|" +
+            Segment(measSeqDone, measSeqTotal) + "|" +
+            Segment(warmParDone, warmParTotal) + "|" +
+            Segment(measParDone, measParTotal);
+
+        var total =
+            1 + warmSeqTotal + measSeqTotal + warmParTotal + measParTotal;
+
+        var done =
+            genDone + warmSeqDone + measSeqDone + warmParDone + measParDone;
+
+        var percent = (double)done / total * 100;
 
         Console.Write($"\r[{bar}] {percent,6:F1}%");
     }
