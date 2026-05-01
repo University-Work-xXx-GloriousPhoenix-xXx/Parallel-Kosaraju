@@ -5,8 +5,8 @@ namespace ParallelKosaraju;
 
 public static class GraphHelper
 {
-    private static readonly string ResultDir = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\ParallelKosaraju\\ParallelKosaraju\\Result\\";
-    
+    private static readonly string ResultDir = "F:\\Programmes\\Github\\Reps\\Parallel Kosaraju\\Result";
+
     private static readonly int MEASURE_RUNS = 10;
     private static readonly int WARMUP_RUNS = 3;
 
