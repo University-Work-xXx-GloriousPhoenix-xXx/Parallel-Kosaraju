@@ -13,7 +13,6 @@ public class SCCFinder<T> : ISCCFinder<T>
         var stack = new Stack<int>();
         var order = new List<int>();
 
-        // Forward DFS
         for (var v = 0; v < n; v++)
         {
             if (state[v] != 0)
@@ -50,7 +49,6 @@ public class SCCFinder<T> : ISCCFinder<T>
         var components = new List<List<int>>();
         var visited = new bool[n];
 
-        // Backward DFS
         for (var i = order.Count - 1; i >= 0; i--)
         {
             var start = order[i];
@@ -83,11 +81,11 @@ public class SCCFinder<T> : ISCCFinder<T>
         return components;
     }
 
-    public List<List<int>> KosarajuParallel(DirectedGraph<T> graph)
+    public List<List<int>> KosarajuParallel(DirectedGraph<T> graph, int maxDegreeOfParallelism = -1)
     {
         var n = graph.VertexCount;
         var order = ComputeFinishOrderSequential(graph, n);
-        return BuildComponentsParallel(graph, n, order);
+        return BuildComponentsParallel(graph, n, order, maxDegreeOfParallelism);
     }
 
     private static List<int> ComputeFinishOrderSequential(DirectedGraph<T> graph, int n)
@@ -125,9 +123,10 @@ public class SCCFinder<T> : ISCCFinder<T>
         return order;
     }
 
-    private static List<List<int>> BuildComponentsParallel(
-        DirectedGraph<T> graph, int n, List<int> order)
+    private static List<List<int>> BuildComponentsParallel(DirectedGraph<T> graph, int n, List<int> order, int maxDegreeOfParallelism)
     {
+        var options = new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism };
+
         var visited = new bool[n];
         var components = new List<List<int>>();
 
@@ -145,7 +144,7 @@ public class SCCFinder<T> : ISCCFinder<T>
             {
                 var nextFrontier = new ConcurrentBag<int>();
 
-                Parallel.ForEach(currentFrontier, node =>
+                Parallel.ForEach(currentFrontier, options, node =>
                 {
                     foreach (var neighbour in graph.InEdges[node])
                     {

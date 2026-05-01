@@ -8,7 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="Result\" />
+    <Folder Include="Result\Classic\" />
+    <Folder Include="Result\ParallelOnSizes\" />
+    <Folder Include="Result\SequentialOnSizes\" />
+    <Folder Include="Result\ParallelOnThreads\" />
   </ItemGroup>
 
 </Project>

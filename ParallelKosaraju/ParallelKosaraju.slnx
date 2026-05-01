@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="ParallelKosaraju.Tests/ParallelKosaraju.Tests.csproj" Id="910fbe71-b60a-4910-b77e-88eb5149e35f" />
   <Project Path="ParallelKosaraju/ParallelKosaraju.csproj" />
 </Solution>
