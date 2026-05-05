@@ -119,7 +119,7 @@ public static class GraphHelper
             var g = GenerateRandomGraph(size, edgeCount);
 
             var start = NanoTime();
-            _ = finder.KosarajuParallel(g, maxDegreeOfParallelism);
+            _ = finder.KosarajuParallel(g);
             var end = NanoTime();
 
             var tExp = (end - start) / 1_000_000.0;
