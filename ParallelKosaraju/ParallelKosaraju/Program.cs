@@ -5,7 +5,7 @@ namespace ParallelKosaraju;
 
 public enum BenchmarkMode
 {
-    Classic,
+    Classic = 1,
     SequentialOnSizes,
     ParallelOnSizes,
     CompareOnThreads
@@ -15,6 +15,7 @@ public static class Program
 {
     private static readonly int globalRuns = 10;
     private static double edgeRatio = 5d;
+
     private static readonly List<int> sizes =
     [
         1_000_000,
@@ -26,52 +27,110 @@ public static class Program
 
     public static void Main(string[] args)
     {
-        var mode = BenchmarkMode.CompareOnThreads;
-        var parsedRatio = edgeRatio;
+        ShowMenu();
+
+        var mode = ReadMode();
+        if (mode == null)
+        {
+            Console.WriteLine("Invalid option. Program will exit.");
+            return;
+        }
+
+        RunMode(mode.Value);
+    }
+
+    private static void ShowMenu()
+    {
+        Console.WriteLine("Select benchmark mode:");
+        Console.WriteLine("1. Classic");
+        Console.WriteLine("2. SequentialOnSizes");
+        Console.WriteLine("3. ParallelOnSizes");
+        Console.WriteLine("4. CompareOnThreads");
+        Console.Write("Enter option: ");
+    }
+
+    private static BenchmarkMode? ReadMode()
+    {
+        var input = Console.ReadLine();
+
+        if (int.TryParse(input, out int value) &&
+            Enum.IsDefined(typeof(BenchmarkMode), value))
+        {
+            return (BenchmarkMode)value;
+        }
+
+        return null;
+    }
+
+    private static void RunMode(BenchmarkMode mode)
+    {
         switch (mode)
         {
             case BenchmarkMode.Classic:
-                Console.Write("Enter the edge ratio to vertices: ");
-                if (double.TryParse(Console.ReadLine(), CultureInfo.InvariantCulture, out parsedRatio))
-                {
-                    edgeRatio = parsedRatio;
-                }
-                for (var gr = 0; gr < globalRuns; gr++)
-                {
-                    var suffix = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
-                    GraphHelper.Benchmark(edgeRatio, suffix);
-                    Thread.Sleep(5);
-                }
-            break;
+                RunClassic();
+                break;
+
             case BenchmarkMode.SequentialOnSizes:
-                Console.Write("Enter the edge ratio to vertices: ");
-                if (double.TryParse(Console.ReadLine(), CultureInfo.InvariantCulture, out parsedRatio))
-                {
-                    edgeRatio = parsedRatio;
-                }
-                GraphHelper.BenchmarkSequentialOnSizes(edgeRatio);
-            break;
+                RunSequentialOnSizes();
+                break;
+
             case BenchmarkMode.ParallelOnSizes:
-                Console.Write("Enter the edge ratio to vertices: ");
-                if (double.TryParse(Console.ReadLine(), CultureInfo.InvariantCulture, out parsedRatio))
-                {
-                    edgeRatio = parsedRatio;
-                }
-                GraphHelper.BenchmarkParallelOnSizes(parsedRatio);
-            break;
+                RunParallelOnSizes();
+                break;
+
             case BenchmarkMode.CompareOnThreads:
-                Console.Write("Enter the edge ratio to vertices: ");
-                if (double.TryParse(Console.ReadLine(), CultureInfo.InvariantCulture, out parsedRatio))
-                {
-                    edgeRatio = parsedRatio;
-                }
-                foreach (var size in sizes)
-                {
-                    GraphHelper.BenchmarkParallelOnThreads(size, edgeRatio);
-                }
-            break;
+                RunCompareOnThreads();
+                break;
+
             default:
-                throw new ArgumentException("Incorrect option");
+                throw new ArgumentOutOfRangeException(nameof(mode));
         }
+    }
+
+    private static void RunClassic()
+    {
+        var ratio = ReadEdgeRatio();
+
+        for (var gr = 0; gr < globalRuns; gr++)
+        {
+            var suffix = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
+            GraphHelper.Benchmark(ratio, suffix);
+            Thread.Sleep(5);
+        }
+    }
+
+    private static void RunSequentialOnSizes()
+    {
+        var ratio = ReadEdgeRatio();
+        GraphHelper.BenchmarkSequentialOnSizes(ratio);
+    }
+
+    private static void RunParallelOnSizes()
+    {
+        var ratio = ReadEdgeRatio();
+        GraphHelper.BenchmarkParallelOnSizes(ratio);
+    }
+
+    private static void RunCompareOnThreads()
+    {
+        var ratio = ReadEdgeRatio();
+
+        foreach (var size in sizes)
+        {
+            GraphHelper.BenchmarkParallelOnThreads(size, ratio);
+        }
+    }
+
+    private static double ReadEdgeRatio()
+    {
+        Console.Write("Enter the edge ratio to vertices: ");
+
+        if (double.TryParse(Console.ReadLine(), CultureInfo.InvariantCulture, out var parsed))
+        {
+            return parsed;
+        }
+
+        Console.WriteLine("Invalid input. Using default value: 5.0");
+        return edgeRatio;
     }
 }

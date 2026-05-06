@@ -10,7 +10,7 @@ public static class GraphHelper
     private static readonly int MEASURE_RUNS = 10;
     private static readonly int WARMUP_RUNS = 3;
 
-    private static readonly int START_POW = 4;
+    private static readonly int START_POW = 1;
     private static readonly int END_POW = 7;
     private static readonly int POW_COUNT = END_POW - START_POW + 1;
 
@@ -119,7 +119,7 @@ public static class GraphHelper
             var g = GenerateRandomGraph(size, edgeCount);
 
             var start = NanoTime();
-            _ = finder.KosarajuParallel(g);
+            _ = finder.KosarajuParallel(g, maxDegreeOfParallelism);
             var end = NanoTime();
 
             var tExp = (end - start) / 1_000_000.0;
