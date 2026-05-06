@@ -65,61 +65,7 @@ public static class GraphHelper
             var g = GenerateRandomGraph(size, edgeCount);
 
             var start = NanoTime();
-            _ = finder.KosarajuSingleThreadedParallel(g);
-            var end = NanoTime();
-
-            var tExp = (end - start) / 1_000_000.0;
-            var tCal = 3 * size + 2 * edgeCount;
-
-            var cmdOutput = string.Format(cmdPattern, size, edgeCount, tExp, tCal);
-            var csvOutput = $"{size};{edgeCount};{tExp};{tCal}";
-
-            Console.WriteLine(cmdOutput);
-            File.AppendAllLines(decoPath, [cmdOutput]);
-            File.AppendAllLines(purePath, [csvOutput]);
-        }
-
-        Console.WriteLine(separator);
-        File.AppendAllLines(decoPath, [separator]);
-    }
-
-    public static void BenchmarkParallelOnSizes(double edgeRatio, int maxDegreeOfParallelism = -1)
-    {
-        var dir = Path.Combine(ResultDir, "ParallelOnSizes\\");
-        Directory.CreateDirectory(dir);
-
-        var suffix = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
-        var decoPath = Path.Combine(dir, $"ParallelOnSizes_{suffix}.txt");
-        var purePath = Path.Combine(dir, $"ParallelOnSizes_{suffix}.csv");
-
-        File.WriteAllText(decoPath, string.Empty);
-        File.WriteAllText(purePath, string.Empty);
-
-        var sizes = new List<int>();
-        var factor = (int)Math.Pow(10, START_POW);
-        for (var pow = 0; pow < POW_COUNT; pow++)
-        {
-            sizes.Add(factor);
-            sizes.Add(2 * factor);
-            sizes.Add(5 * factor);
-            factor *= 10;
-        }
-
-        var separator = "|------------|-----------|--------------|--------------|";
-        var cmdPattern = "| {0,10} | {1,9} | {2,12:F2} | {3,12} |";
-        var header = string.Format(cmdPattern, "Vertices", "Edges", "T (ms)", "T(V,E)");
-
-        Console.WriteLine($"{separator}\n{header}\n{separator}");
-        File.AppendAllLines(decoPath, [separator, header, separator]);
-        File.AppendAllLines(purePath, ["v;e;t_ms;t_calc"]);
-
-        foreach (var size in sizes)
-        {
-            var edgeCount = (int)(edgeRatio * size);
-            var g = GenerateRandomGraph(size, edgeCount);
-
-            var start = NanoTime();
-            _ = finder.KosarajuParallel(g, maxDegreeOfParallelism);
+            _ = finder.KosarajuSequential(g);
             var end = NanoTime();
 
             var tExp = (end - start) / 1_000_000.0;

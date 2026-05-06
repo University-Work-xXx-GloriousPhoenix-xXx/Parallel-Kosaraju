@@ -7,13 +7,11 @@ public enum BenchmarkMode
 {
     Classic = 1,
     SequentialOnSizes,
-    ParallelOnSizes,
     CompareOnThreads
 }
 
 public static class Program
 {
-    private static readonly int globalRuns = 10;
     private static double edgeRatio = 5d;
 
     private static readonly List<int> sizes =
@@ -74,10 +72,6 @@ public static class Program
                 RunSequentialOnSizes();
                 break;
 
-            case BenchmarkMode.ParallelOnSizes:
-                RunParallelOnSizes();
-                break;
-
             case BenchmarkMode.CompareOnThreads:
                 RunCompareOnThreads();
                 break;
@@ -90,25 +84,14 @@ public static class Program
     private static void RunClassic()
     {
         var ratio = ReadEdgeRatio();
-
-        for (var gr = 0; gr < globalRuns; gr++)
-        {
-            var suffix = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
-            GraphHelper.Benchmark(ratio, suffix);
-            Thread.Sleep(5);
-        }
+        var suffix = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
+        GraphHelper.Benchmark(ratio, suffix);
     }
 
     private static void RunSequentialOnSizes()
     {
         var ratio = ReadEdgeRatio();
         GraphHelper.BenchmarkSequentialOnSizes(ratio);
-    }
-
-    private static void RunParallelOnSizes()
-    {
-        var ratio = ReadEdgeRatio();
-        GraphHelper.BenchmarkParallelOnSizes(ratio);
     }
 
     private static void RunCompareOnThreads()
