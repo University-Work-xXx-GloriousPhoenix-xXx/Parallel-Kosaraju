@@ -10,8 +10,8 @@ public static class GraphHelper
     private static readonly int MEASURE_RUNS = 10;
     private static readonly int WARMUP_RUNS = 3;
 
-    private static readonly int START_POW = 4;
-    private static readonly int END_POW = 7;
+    private static readonly int START_POW = 1;
+    private static readonly int END_POW = 6;
     private static readonly int POW_COUNT = END_POW - START_POW + 1;
 
     private static readonly SCCFinder<int> finder = new();
@@ -83,60 +83,6 @@ public static class GraphHelper
         File.AppendAllLines(decoPath, [separator]);
     }
 
-    public static void BenchmarkParallelOnSizes(double edgeRatio, int maxDegreeOfParallelism = -1)
-    {
-        var dir = Path.Combine(ResultDir, "ParallelOnSizes\\");
-        Directory.CreateDirectory(dir);
-
-        var suffix = DateTime.UtcNow.ToString("yyyyMMdd_HHmmss_fff");
-        var decoPath = Path.Combine(dir, $"ParallelOnSizes_{suffix}.txt");
-        var purePath = Path.Combine(dir, $"ParallelOnSizes_{suffix}.csv");
-
-        File.WriteAllText(decoPath, string.Empty);
-        File.WriteAllText(purePath, string.Empty);
-
-        var sizes = new List<int>();
-        var factor = (int)Math.Pow(10, START_POW);
-        for (var pow = 0; pow < POW_COUNT; pow++)
-        {
-            sizes.Add(factor);
-            sizes.Add(2 * factor);
-            sizes.Add(5 * factor);
-            factor *= 10;
-        }
-
-        var separator = "|------------|-----------|--------------|--------------|";
-        var cmdPattern = "| {0,10} | {1,9} | {2,12:F2} | {3,12} |";
-        var header = string.Format(cmdPattern, "Vertices", "Edges", "T (ms)", "T(V,E)");
-
-        Console.WriteLine($"{separator}\n{header}\n{separator}");
-        File.AppendAllLines(decoPath, [separator, header, separator]);
-        File.AppendAllLines(purePath, ["v;e;t_ms;t_calc"]);
-
-        foreach (var size in sizes)
-        {
-            var edgeCount = (int)(edgeRatio * size);
-            var g = GenerateRandomGraph(size, edgeCount);
-
-            var start = NanoTime();
-            _ = finder.KosarajuParallel(g, maxDegreeOfParallelism);
-            var end = NanoTime();
-
-            var tExp = (end - start) / 1_000_000.0;
-            var tCal = 3 * size + 2 * edgeCount;
-
-            var cmdOutput = string.Format(cmdPattern, size, edgeCount, tExp, tCal);
-            var csvOutput = $"{size};{edgeCount};{tExp};{tCal}";
-
-            Console.WriteLine(cmdOutput);
-            File.AppendAllLines(decoPath, [cmdOutput]);
-            File.AppendAllLines(purePath, [csvOutput]);
-        }
-
-        Console.WriteLine(separator);
-        File.AppendAllLines(decoPath, [separator]);
-    }
-
     public static void BenchmarkParallelOnThreads(int size, double edgeRatio)
     {
         var dir = Path.Combine(ResultDir, "ParallelOnThreads\\");
@@ -166,7 +112,7 @@ public static class GraphHelper
 
         for (var wr = 0; wr < WARMUP_RUNS; wr++)
         {
-            finder.KosarajuSequential(graph);
+            finder.KosarajuSingleThreadedParallel(graph);
             warmSeqDone++;
             DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, warmParTotal, measSeqDone, MEASURE_RUNS, measParDone, measParTotal);
         }
@@ -175,7 +121,7 @@ public static class GraphHelper
         for (var r = 0; r < MEASURE_RUNS; r++)
         {
             var s = NanoTime();
-            finder.KosarajuSequential(graph);
+            finder.KosarajuSingleThreadedParallel(graph);
             seqTotal += NanoTime() - s;
 
             measSeqDone++;
@@ -278,7 +224,7 @@ public static class GraphHelper
 
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
-                finder.KosarajuSequential(graph);
+                finder.KosarajuSingleThreadedParallel(graph);
                 warmSeqDone++;
                 DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
             }
@@ -288,7 +234,7 @@ public static class GraphHelper
             for (var r = 0; r < MEASURE_RUNS; r++)
             {
                 var seqStart = NanoTime();
-                var seqRes = finder.KosarajuSequential(graph);
+                var seqRes = finder.KosarajuSingleThreadedParallel(graph);
                 var seqEnd = NanoTime();
 
                 measSeqDone++;
