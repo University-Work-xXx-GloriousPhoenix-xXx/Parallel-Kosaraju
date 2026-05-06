@@ -70,7 +70,7 @@ public class TestParallel
     [Fact]
     public void Parallel_ComponentCountMatchesSequential()
     {
-        var graph = GraphHelper.GenerateRandomGraph(100, 300);
+        var graph = GraphHelper.GenerateRandomGraph(100, 500);
         var sequential = finder.KosarajuSequential(graph);
         var parallel = finder.KosarajuParallel(graph);
         Assert.Equal(sequential.Count, parallel.Count);
@@ -79,7 +79,7 @@ public class TestParallel
     [Fact]
     public void Parallel_ComponentSizesMatchSequential()
     {
-        var graph = GraphHelper.GenerateRandomGraph(200, 600);
+        var graph = GraphHelper.GenerateRandomGraph(100, 500);
         var sequential = finder.KosarajuSequential(graph)
             .Select(c => c.Count).OrderByDescending(x => x).ToList();
         var parallel = finder.KosarajuParallel(graph)

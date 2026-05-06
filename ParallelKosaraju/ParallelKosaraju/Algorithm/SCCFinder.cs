@@ -5,56 +5,74 @@ namespace ParallelKosaraju.Algorithm;
 
 public class SCCFinder<T> : ISCCFinder<T>
 {
-    public List<List<int>> KosarajuSequential(DirectedGraph<T> graph)
+    public List<List<int>> KosarajuSequential(
+        DirectedGraph<T> graph)
         => PerformKosaraju(graph, maxDegreeOfParallelism: 1);
 
-    public List<List<int>> KosarajuParallel(DirectedGraph<T> graph, int maxDegreeOfParallelism = -1)
+    public List<List<int>> KosarajuParallel(
+        DirectedGraph<T> graph,
+        int maxDegreeOfParallelism = -1)
         => PerformKosaraju(graph, maxDegreeOfParallelism);
 
-    private static List<List<int>> PerformKosaraju(DirectedGraph<T> graph, int maxDegreeOfParallelism)
+    private static List<List<int>> PerformKosaraju(
+        DirectedGraph<T> graph,
+        int maxDegreeOfParallelism)
     {
         var n = graph.VertexCount;
-        var order = PerformPhase1(graph, n);
+        var order = PerformPhase1(graph, n, maxDegreeOfParallelism);
         return PerformPhase2(graph, n, order, maxDegreeOfParallelism);
     }
 
-    private static List<int> PerformPhase1(DirectedGraph<T> graph, int n)
+    private static List<int> PerformPhase1(
+        DirectedGraph<T> graph,
+        int n,
+        int maxDegreeOfParallelism)
     {
-        var state = new byte[n];
-        var stack = new Stack<int>();
-        var order = new List<int>(n);
+        var visited = new int[n];
+        var sharedOrder = new ConcurrentStack<int>();
+        var options = new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism };
 
-        for (var v = 0; v < n; v++)
+        Parallel.For(0, n, options, v =>
         {
-            if (state[v] != 0) continue;
-            stack.Push(v);
-            while (stack.Count > 0)
+            if (Interlocked.CompareExchange(ref visited[v], 1, 0) == 0)
             {
-                var node = stack.Peek();
-                if (state[node] == 0)
+                var localStack = new Stack<int>();
+                var localOrder = new List<int>();
+
+                var dfsStack = new Stack<(int node, int edgeIndex)>();
+                dfsStack.Push((v, 0));
+
+                while (dfsStack.Count > 0)
                 {
-                    state[node] = 1;
-                    foreach (var neighbour in graph.OutEdges[node])
-                        if (state[neighbour] == 0)
-                            stack.Push(neighbour);
-                }
-                else
-                {
-                    if (state[node] == 1)
+                    var (curr, edgeIdx) = dfsStack.Pop();
+                    var neighbors = graph.OutEdges[curr];
+
+                    if (edgeIdx < neighbors.Count)
                     {
-                        state[node] = 2;
-                        order.Add(node);
+                        dfsStack.Push((curr, edgeIdx + 1));
+                        int neighbor = neighbors[edgeIdx];
+
+                        if (Interlocked.CompareExchange(ref visited[neighbor], 1, 0) == 0)
+                        {
+                            dfsStack.Push((neighbor, 0));
+                        }
                     }
-                    stack.Pop();
+                    else
+                    {
+                        sharedOrder.Push(curr);
+                    }
                 }
             }
-        }
+        });
 
-        return order;
+        return [.. sharedOrder.Reverse()];
     }
 
     private static List<List<int>> PerformPhase2(
-        DirectedGraph<T> graph, int n, List<int> order, int maxDegreeOfParallelism)
+        DirectedGraph<T> graph,
+        int n,
+        List<int> order,
+        int maxDegreeOfParallelism)
     {
         var options = new ParallelOptions { MaxDegreeOfParallelism = maxDegreeOfParallelism };
         var visited = new bool[n];
