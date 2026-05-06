@@ -65,7 +65,7 @@ public static class GraphHelper
             var g = GenerateRandomGraph(size, edgeCount);
 
             var start = NanoTime();
-            _ = finder.KosarajuSequential(g);
+            _ = finder.KosarajuSingleThreadedParallel(g);
             var end = NanoTime();
 
             var tExp = (end - start) / 1_000_000.0;
@@ -166,7 +166,7 @@ public static class GraphHelper
 
         for (var wr = 0; wr < WARMUP_RUNS; wr++)
         {
-            finder.KosarajuSequential(graph);
+            finder.KosarajuSingleThreadedParallel(graph);
             warmSeqDone++;
             DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, warmParTotal, measSeqDone, MEASURE_RUNS, measParDone, measParTotal);
         }
@@ -175,7 +175,7 @@ public static class GraphHelper
         for (var r = 0; r < MEASURE_RUNS; r++)
         {
             var s = NanoTime();
-            finder.KosarajuSequential(graph);
+            finder.KosarajuSingleThreadedParallel(graph);
             seqTotal += NanoTime() - s;
 
             measSeqDone++;
@@ -278,7 +278,7 @@ public static class GraphHelper
 
             for (var wr = 0; wr < WARMUP_RUNS; wr++)
             {
-                finder.KosarajuSequential(graph);
+                finder.KosarajuSingleThreadedParallel(graph);
                 warmSeqDone++;
                 DrawProgress(genDone, warmSeqDone, WARMUP_RUNS, warmParDone, WARMUP_RUNS, measSeqDone, MEASURE_RUNS, measParDone, MEASURE_RUNS);
             }
@@ -288,7 +288,7 @@ public static class GraphHelper
             for (var r = 0; r < MEASURE_RUNS; r++)
             {
                 var seqStart = NanoTime();
-                var seqRes = finder.KosarajuSequential(graph);
+                var seqRes = finder.KosarajuSingleThreadedParallel(graph);
                 var seqEnd = NanoTime();
 
                 measSeqDone++;

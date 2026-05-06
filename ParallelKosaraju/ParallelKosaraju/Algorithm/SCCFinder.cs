@@ -5,7 +5,84 @@ namespace ParallelKosaraju.Algorithm;
 
 public class SCCFinder<T> : ISCCFinder<T>
 {
-    public List<List<int>> KosarajuSequential(
+    public List<List<int>> KosarajuSequential(DirectedGraph<T> graph)
+    {
+        var n = graph.VertexCount;
+
+        var state = new byte[n];
+        var stack = new Stack<int>();
+        var order = new List<int>();
+
+        for (var v = 0; v < n; v++)
+        {
+            if (state[v] != 0)
+            {
+                continue;
+            }
+            stack.Push(v);
+            while (stack.Count > 0)
+            {
+                var node = stack.Peek();
+                if (state[node] == 0)
+                {
+                    state[node] = 1;
+                    foreach (var neighbour in graph.OutEdges[node])
+                    {
+                        if (state[neighbour] == 0)
+                        {
+                            stack.Push(neighbour);
+                        }
+                    }
+                }
+                else
+                {
+                    if (state[node] == 1)
+                    {
+                        state[node] = 2;
+                        order.Add(node);
+                    }
+                    stack.Pop();
+                }
+            }
+        }
+
+        var components = new List<List<int>>();
+        var visited = new bool[n];
+
+        for (var i = order.Count - 1; i >= 0; i--)
+        {
+            var start = order[i];
+            if (visited[start])
+            {
+                continue;
+            }
+
+            var component = new List<int>();
+            stack.Push(start);
+            visited[start] = true;
+
+            while (stack.Count > 0)
+            {
+                var node = stack.Pop();
+                component.Add(node);
+                foreach (var neighbour in graph.InEdges[node])
+                {
+                    if (!visited[neighbour])
+                    {
+                        visited[neighbour] = true;
+                        stack.Push(neighbour);
+                    }
+                }
+            }
+
+            components.Add(component);
+        }
+
+        return components;
+
+    }
+
+    public List<List<int>> KosarajuSingleThreadedParallel(
         DirectedGraph<T> graph)
         => PerformKosaraju(graph, maxDegreeOfParallelism: 1);
 
