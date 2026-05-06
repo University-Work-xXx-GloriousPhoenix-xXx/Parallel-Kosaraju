@@ -11,7 +11,7 @@ public static class GraphHelper
     private static readonly int WARMUP_RUNS = 3;
 
     private static readonly int START_POW = 1;
-    private static readonly int END_POW = 7;
+    private static readonly int END_POW = 6;
     private static readonly int POW_COUNT = END_POW - START_POW + 1;
 
     private static readonly SCCFinder<int> finder = new();
